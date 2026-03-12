@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Bản xem thử Web 3D React</title>
+    
+    <!-- Tải React trực tiếp từ CDN để chạy không cần cài đặt Vite -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        /* TOÀN BỘ CSS HIỆU ỨNG 3D VÀ CHUYỂN CẢNH */
+        * { box-sizing: border-box; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #000; }
+        
+        .app-container { width: 100vw; height: 100vh; position: relative; overflow: hidden; display: flex; justify-content: center; align-items: center; transition: background 2s ease-in-out; }
+        .bg-light { background: linear-gradient(135deg, #ffd1ff 0%, #fad0c4 100%); }
+        .bg-dark { background: radial-gradient(circle at center, #1a0b2e 0%, #000000 100%); }
+
+        /* SCENE 0: NÚT BẮT ĐẦU */
+        .start-btn { padding: 15px 40px; font-size: 20px; color: white; background: #ff4d79; border: none; border-radius: 30px; cursor: pointer; animation: pulse 1.5s infinite; z-index: 50; display: flex; align-items: center; gap: 10px; font-weight: bold;}
+        @keyframes pulse { 0% { transform: scale(1); box-shadow: 0 0 10px #ff4d79; } 50% { transform: scale(1.1); box-shadow: 0 0 30px #ff4d79; } 100% { transform: scale(1); box-shadow: 0 0 10px #ff4d79; } }
+
+        /* SCENE 1: QUYỂN SÁCH 3D (ĐÃ SỬA) */
+        .book-scene {
+            /* Kích thước bằng một cuốn sách mở (gấp đôi chiều rộng trang) */
+            width: clamp(300px, 85vw, 700px); 
+            height: 60vh;
+            perspective: 1500px;
+            position: relative;
+        }
+
+        .book-page {
+            position: absolute;
+            /* Chiều rộng bằng một nửa book-scene (một trang) */
+            width: 50%; 
+            height: 100%;
+            top: 0;
+            right: 0; /* Xếp chồng các trang ở phía bên phải lúc đầu */
+            transform-origin: left center; /* Lật từ gáy sách (cạnh trái) */
+            transition: transform 1.5s cubic-bezier(0.645, 0.045, 0.355, 1);
+            transform-style: preserve-3d;
+            border-radius: 10px;
+        }
+        .page-front, .page-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; background: white; border-radius: 10px; box-shadow: inset 0 0 20px rgba(0,0,0,0.05), 2px 2px 10px rgba(0,0,0,0.2); display: flex; justify-content: center; align-items: center; padding: 20px; text-align: center; }
+        .page-back { transform: rotateY(180deg); }
+        .book-page img { width: 100%; height: 100%; object-fit: cover; border-radius: 5px; }
+        .book-page p { font-size: 1.2rem; color: #d6336c; line-height: 1.6; font-weight: bold; }
+        .flipped { transform: rotateY(-180deg); }
+
+        /* SCENE 2: TRÁI TIM PHÁT SÁNG NỔ TUNG */
+        .transition-scene { position: absolute; z-index: 100; }
+        .glowing-heart { width: 80px; height: 80px; background: #ff1493; position: relative; transform: rotate(-45deg); animation: heartbeat 1s infinite, heartExplode 3s forwards 1.5s; box-shadow: 0 0 50px #ff1493; }
+        .glowing-heart::before, .glowing-heart::after { content: ""; width: 80px; height: 80px; background: #ff1493; border-radius: 50%; position: absolute; }
+        .glowing-heart::before { top: -40px; left: 0; }
+        .glowing-heart::after { top: 0; left: 40px; }
+        @keyframes heartbeat { 0%, 100% { transform: rotate(-45deg) scale(1); } 50% { transform: rotate(-45deg) scale(1.2); } }
+        @keyframes heartExplode { 0% { opacity: 1; transform: rotate(-45deg) scale(1); } 100% { opacity: 0; transform: rotate(-45deg) scale(30); } }
+
+        /* SCENE 3: VÒNG QUAY 3D BẦU TRỜI ĐÊM */
+        .night-scene { position: absolute; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; perspective: 1000px; opacity: 0; animation: fadeIn 2s forwards; }
+        @keyframes fadeIn { to { opacity: 1; } }
+
+        .carousel-container { width: 180px; height: 240px; position: relative; transform-style: preserve-3d; animation: spinRing 20s linear infinite; margin-top: 80px; }
+        .carousel-item { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 3px solid #ffb6c1; border-radius: 10px; overflow: hidden; box-shadow: 0 0 15px rgba(255, 182, 193, 0.8); backface-visibility: visible; }
+        .carousel-item img { width: 100%; height: 100%; object-fit: cover; }
+        @keyframes spinRing { from { transform: rotateY(0deg) rotateX(-5deg); } to { transform: rotateY(360deg) rotateX(-5deg); } }
+
+        /* Ngôi sao lấp lánh & Pháo hoa giả lập */
+        .stars { position: absolute; width: 100%; height: 100%; background: transparent; z-index: -1; }
+        .star { position: absolute; background: white; border-radius: 50%; animation: twinkle infinite alternate; }
+        @keyframes twinkle { 0% { opacity: 0.2; transform: scale(0.8); } 100% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 5px white; } }
+        
+        .firework-heart { position: absolute; top: 20%; font-size: 80px; opacity: 0; text-shadow: 0 0 20px #ff1493; animation: fireworksExplode 2s infinite alternate; }
+        @keyframes fireworksExplode { 0% { transform: scale(0.5); opacity: 0.8; } 100% { transform: scale(1.5); opacity: 0; } }
+
+        /* Chữ bay xung quanh */
+        .floating-text { position: absolute; color: #ffb6c1; font-size: 1.2rem; font-weight: bold; text-shadow: 0 0 10px #ffb6c1; animation: floatText 4s ease-in-out infinite; white-space: nowrap; }
+        .txt-1 { top: 25%; left: 5%; animation-delay: 0s; }
+        .txt-2 { top: 35%; right: 5%; animation-delay: 1s; }
+        .txt-3 { bottom: 20%; left: 15%; animation-delay: 2s; }
+        @keyframes floatText { 0%, 100% { transform: translateY(0px) scale(1); } 50% { transform: translateY(-15px) scale(1.1); } }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <!-- MÃ LOGIC REACT -->
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        const myPages =[
+            { text: "Nay là 14/3 rồi anh có điều này muốn nói", img: "./assets/z7597498490627_f47aae2367a5eb0319da60b7d8738774.jpg" },
+            { text: "Có em bên cạnh, mọi thứ đều anh chưa từng mơ tới", img: "./assets/z7597501449176_2c5ebeb6809cb90084cda2f8c4304bf2.jpg" },
+            { text: "2 Đứa đã đồng hành với nhau thời gian dài", img: "./assets/z7597503300980_9bd420833b482b8e1d5057989fd25bb1.jpg" },
+            { text: "Thực sự là anh yêu em rất nhiều, Bông thối ❤️", img: "./assets/z7597504735035_3c90700dd5145cc2ea16e961b21c469d.jpg" }
+        ];
+
+        const ringImages =[
+            
+            "./assets/z7597510732204_5d2668c5f0bef2c4e6c59b575b0cab84.jpg",
+            
+            "./assets/z7597512435568_58a327743cc185c475012fd0448c2fe7.jpg",
+            "./assets/image.png",
+
+            "./assets/z7597514365541_699ab371e4bb637a0ba4dd0434a0bdbf.jpg",
+            
+            "./assets/z7597518708433_261db5708a58faaf5f8be49dd141e2da.jpg",
+            "./assets/z7597505266889_deaf5f8e73832e08f8acf8906dc7248a.jpg",
+        ];
+
+        function App() {
+            const [scene, setScene] = useState(0); 
+            const [currentPage, setCurrentPage] = useState(0);
+            const audioRef = useRef(null);
+
+            useEffect(() => {
+                if (audioRef.current) {
+                    // Cố gắng tự động phát nhạc, nhưng có thể bị trình duyệt chặn
+                    audioRef.current.play().catch(error => {
+                        console.warn("Autoplay bị chặn, nhạc sẽ phát sau khi người dùng tương tác.");
+                    });
+                }
+            }, []);
+
+            const handleStart = () => {
+                if (audioRef.current) {
+                    audioRef.current.play().catch(() => {});
+                }
+                setScene(1);
+            };
+
+            // Tự động lật sách
+            useEffect(() => {
+                if (scene === 1) {
+                    const timer = setInterval(() => {
+                        setCurrentPage(prev => {
+                            if (prev < myPages.length) return prev + 1;
+                            clearInterval(timer);
+                            setTimeout(() => setScene(2), 1500); // Lật xong trang cuối, chờ 1.5s qua cảnh trái tim
+                            return prev;
+                        });
+                    }, 3000); // 3 giây 1 trang
+                    return () => clearInterval(timer);
+                }
+            }, [scene]);
+
+            // Trái tim nổ tung chuyển sang đêm
+            useEffect(() => {
+                if (scene === 2) {
+                    const timer = setTimeout(() => setScene(3), 3500);
+                    return () => clearTimeout(timer);
+                }
+            }, [scene]);
+
+            // Tạo sao ngẫu nhiên
+            const stars = Array.from({ length: 40 }).map(() => ({
+                left: `${Math.random() * 100}vw`,
+                top: `${Math.random() * 100}vh`,
+                size: `${Math.random() * 3 + 1}px`,
+                duration: `${Math.random() * 2 + 1}s`
+            }));
+
+            return (
+                <div className={`app-container ${scene === 3 ? 'bg-dark' : 'bg-light'}`}>
+                    <audio ref={audioRef} loop preload="auto" autoPlay>
+                        <source src="./assets/audio/Hơn Cả Yêu (Pro House).mp3" type="audio/mpeg" />
+                    </audio>
+
+                    {scene === 0 && (
+                        <button className="start-btn" onClick={handleStart}>
+                            Mở Món Quà ❤️
+                        </button>
+                    )}
+
+                    {scene === 1 && (
+                        <div className="book-scene">
+                            {myPages.map((page, index) => (
+                                <div 
+                                    key={index} 
+                                    className={`book-page ${index < currentPage ? 'flipped' : ''}`} 
+                                    style={{ 
+                                        zIndex: (() => {
+                                            const pageCount = myPages.length;
+                                            // Trang đang lật (vừa được thêm class 'flipped')
+                                            if (index === currentPage - 1) {
+                                                return pageCount + 1; // Luôn có z-index cao nhất
+                                            }
+                                            // Trang đã lật xong
+                                            if (index < currentPage) {
+                                                return index + 1; // Xếp chồng ở bên trái
+                                            }
+                                            // Trang chưa lật
+                                            return pageCount - index; // Xếp chồng ở bên phải
+                                        })()
+                                    }}
+                                >
+                                    <div className="page-front"><p>{page.text}</p></div>
+                                    <div className="page-back"><img src={page.img} alt="memory" /></div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {scene === 2 && (
+                        <div className="transition-scene">
+                            <div className="glowing-heart"></div>
+                        </div>
+                    )}
+
+                    {scene === 3 && (
+                        <div className="night-scene">
+                            <div className="stars">
+                                {stars.map((star, i) => (
+                                    <div key={i} className="star" style={{ left: star.left, top: star.top, width: star.size, height: star.size, animationDuration: star.duration }} />
+                                ))}
+                            </div>
+
+                            <div className="firework-heart">💖</div>
+
+                            <div className="floating-text txt-1">Happy Valentine's Day ❤️</div>
+                            <div className="floating-text txt-2">Love Youuu ✨</div>
+                            <div className="floating-text txt-3">Together Forever 🌸</div>
+
+                            <div className="carousel-container">
+                                {ringImages.map((img, i) => {
+                                    const angle = i * (360 / ringImages.length);
+                                    return (
+                                        <div key={i} className="carousel-item" style={{ transform: `rotateY(${angle}deg) translateZ(210px)` }}>
+                                            <img src={img} alt={`ring-${i}`} />
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
