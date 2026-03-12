@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bông thích là được</title>
+    <title>Bản xem thử Web 3D React</title>
     
     <!-- Tải React trực tiếp từ CDN để chạy không cần cài đặt Vite -->
     <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
@@ -17,7 +17,7 @@
         
         .app-container { width: 100vw; height: 100vh; position: relative; overflow: hidden; display: flex; justify-content: center; align-items: center; transition: background 2s ease-in-out; }
         .bg-light { background: linear-gradient(135deg, #ffd1ff 0%, #fad0c4 100%); }
-        .bg-dark { background: radial-gradient(circle at center, #1a0b2e 0%, #000000 100%); }
+        .bg-dark { background: radial-gradient(circle at center, #4c1130 0%, #1a0b2e 30%, #000000 70%); }
 
         /* SCENE 0: NÚT BẮT ĐẦU */
         .start-btn { padding: 15px 40px; font-size: 20px; color: white; background: #ff4d79; border: none; border-radius: 30px; cursor: pointer; animation: pulse 1.5s infinite; z-index: 50; display: flex; align-items: center; gap: 10px; font-weight: bold;}
@@ -51,7 +51,24 @@
         .flipped { transform: rotateY(-180deg); }
 
         /* SCENE 2: TRÁI TIM PHÁT SÁNG NỔ TUNG */
-        .transition-scene { position: absolute; z-index: 100; }
+        .transition-scene { 
+            position: absolute; 
+            z-index: 100;
+            width: 100vw; /* Toàn màn hình */
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden; /* Ẩn các hạt bay ra ngoài */
+            animation: flash-bang 3s forwards 1.5s; /* Thêm hiệu ứng flash */
+        }
+        @keyframes flash-bang {
+            0% { background-color: rgba(255, 255, 255, 0); }
+            10% { background-color: rgba(255, 255, 255, 0.8); }
+            20% { background-color: rgba(255, 255, 255, 0); }
+            100% { background-color: rgba(255, 255, 255, 0); }
+        }
+
         .glowing-heart { width: 80px; height: 80px; background: #ff1493; position: relative; transform: rotate(-45deg); animation: heartbeat 1s infinite, heartExplode 3s forwards 1.5s; box-shadow: 0 0 50px #ff1493; }
         .glowing-heart::before, .glowing-heart::after { content: ""; width: 80px; height: 80px; background: #ff1493; border-radius: 50%; position: absolute; }
         .glowing-heart::before { top: -40px; left: 0; }
@@ -59,25 +76,80 @@
         @keyframes heartbeat { 0%, 100% { transform: rotate(-45deg) scale(1); } 50% { transform: rotate(-45deg) scale(1.2); } }
         @keyframes heartExplode { 0% { opacity: 1; transform: rotate(-45deg) scale(1); } 100% { opacity: 0; transform: rotate(-45deg) scale(30); } }
 
+        /* --- HIỆU ỨNG HẠT NỔ TUNG --- */
+        .particle-container {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+        }
+
+        .particle {
+            position: absolute;
+            top: 50%; 
+            left: 50%;
+            background-color: var(--particle-color);
+            border-radius: 50%;
+            opacity: 0;
+            animation: particle-explode 1.5s cubic-bezier(0.1, 0.7, 0.5, 1) forwards;
+        }
+
+        @keyframes particle-explode {
+            0% {
+                transform: translate(-50%, -50%) scale(0.5);
+                opacity: 1;
+            }
+            100% {
+                transform: var(--transform-end);
+                opacity: 0;
+            }
+        }
+
         /* SCENE 3: VÒNG QUAY 3D BẦU TRỜI ĐÊM */
-        .night-scene { position: absolute; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; perspective: 1000px; opacity: 0; animation: fadeIn 2s forwards; }
+        .night-scene { position: absolute; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; perspective: 1000px; opacity: 0; animation: fadeIn 2s forwards; overflow: hidden; }
         @keyframes fadeIn { to { opacity: 1; } }
 
         .carousel-container { width: 180px; height: 240px; position: relative; transform-style: preserve-3d; animation: spinRing 20s linear infinite; margin-top: 80px; }
-        .carousel-item { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 3px solid #ffb6c1; border-radius: 10px; overflow: hidden; box-shadow: 0 0 15px rgba(255, 182, 193, 0.8); backface-visibility: visible; }
+        .carousel-item { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 3px solid #ffb6c1; border-radius: 10px; overflow: hidden; backface-visibility: visible; animation: carousel-glow 2s infinite alternate; }
         .carousel-item img { width: 100%; height: 100%; object-fit: cover; }
         @keyframes spinRing { from { transform: rotateY(0deg) rotateX(-5deg); } to { transform: rotateY(360deg) rotateX(-5deg); } }
+        @keyframes carousel-glow {
+            from { box-shadow: 0 0 25px rgba(255, 182, 193, 1), 0 0 10px #ff1493; }
+            to { box-shadow: 0 0 40px rgba(255, 182, 193, 1), 0 0 20px #ff1493, 0 0 5px white; }
+        }
 
         /* Ngôi sao lấp lánh & Pháo hoa giả lập */
         .stars { position: absolute; width: 100%; height: 100%; background: transparent; z-index: -1; }
         .star { position: absolute; background: white; border-radius: 50%; animation: twinkle infinite alternate; }
-        @keyframes twinkle { 0% { opacity: 0.2; transform: scale(0.8); } 100% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 5px white; } }
+        @keyframes twinkle { 0% { opacity: 0.2; transform: scale(0.8); } 100% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 10px white, 0 0 20px white; } }
         
-        .firework-heart { position: absolute; top: 20%; font-size: 80px; opacity: 0; text-shadow: 0 0 20px #ff1493; animation: fireworksExplode 2s infinite alternate; }
+        /* --- HIỆU ỨNG SAO BĂNG --- */
+        .shooting-star {
+            position: absolute;
+            top: var(--top-offset); /* Sẽ set bằng JS */
+            left: 100%; /* Bắt đầu bên ngoài màn hình bên phải */
+            height: 2px;
+            width: 200px; /* Độ dài vệt sao */
+            background: linear-gradient(-45deg, #fff, rgba(255, 255, 255, 0));
+            border-radius: 999px;
+            filter: drop-shadow(0 0 6px #fff);
+            animation: shooting 3s ease-in-out infinite;
+            animation-delay: var(--delay); /* Sẽ set bằng JS */
+        }
+
+        @keyframes shooting {
+            from {
+                transform: translateX(0) translateY(0) rotate(-30deg);
+            }
+            to {
+                transform: translateX(-150vw) translateY(150vh) rotate(-30deg);
+            }
+        }
+
+        .firework-heart { position: absolute; top: 20%; font-size: 80px; opacity: 0; text-shadow: 0 0 20px #ff1493, 0 0 40px #ff1493; animation: fireworksExplode 2s infinite alternate; }
         @keyframes fireworksExplode { 0% { transform: scale(0.5); opacity: 0.8; } 100% { transform: scale(1.5); opacity: 0; } }
 
         /* Chữ bay xung quanh */
-        .floating-text { position: absolute; color: #ffb6c1; font-size: 1.2rem; font-weight: bold; text-shadow: 0 0 10px #ffb6c1; animation: floatText 4s ease-in-out infinite; white-space: nowrap; }
+        .floating-text { position: absolute; color: #ffb6c1; font-size: 1.2rem; font-weight: bold; text-shadow: 0 0 10px #ffb6c1, 0 0 20px #ff1493; animation: floatText 4s ease-in-out infinite; white-space: nowrap; }
         .txt-1 { top: 25%; left: 5%; animation-delay: 0s; }
         .txt-2 { top: 35%; right: 5%; animation-delay: 1s; }
         .txt-3 { bottom: 20%; left: 15%; animation-delay: 2s; }
@@ -111,6 +183,42 @@
             "./assets/z7597505266889_deaf5f8e73832e08f8acf8906dc7248a.jpg",
         ];
 
+        // --- COMPONENT HIỆU ỨNG HẠT ---
+        function ParticleExplosion() {
+            const [particles, setParticles] = useState([]);
+
+            useEffect(() => {
+                const newParticles = Array.from({ length: 80 }).map(() => { // Tăng số lượng hạt
+                    const size = Math.random() * 8 + 2;
+                    const angle = Math.random() * 360;
+                    const radius = Math.random() * 300 + 50; // Tăng khoảng cách bay
+                    const x = radius * Math.cos(angle * Math.PI / 180);
+                    const y = radius * Math.sin(angle * Math.PI / 180);
+                    const colors = ['#ff1493', '#ff69b4', '#ffb6c1', '#fff', '#f8a5c2'];
+                    const color = colors[Math.floor(Math.random() * colors.length)];
+                    
+                    return {
+                        id: Math.random(),
+                        style: {
+                            '--particle-color': color,
+                            '--transform-end': `translate(${x}px, ${y}px) scale(0)`,
+                            width: `${size}px`,
+                            height: `${size}px`,
+                            // Delay để khớp với animation của trái tim và flash
+                            animationDelay: `${1.5 + Math.random() * 0.4}s` 
+                        }
+                    };
+                });
+                setParticles(newParticles);
+            }, []);
+
+            return (
+                <div className="particle-container">
+                    {particles.map(p => <div key={p.id} className="particle" style={p.style}></div>)}
+                </div>
+            );
+        }
+
         function App() {
             const [scene, setScene] = useState(0); 
             const [currentPage, setCurrentPage] = useState(0);
@@ -118,7 +226,6 @@
 
             useEffect(() => {
                 if (audioRef.current) {
-                    // Cố gắng tự động phát nhạc, nhưng có thể bị trình duyệt chặn
                     audioRef.current.play().catch(error => {
                         console.warn("Autoplay bị chặn, nhạc sẽ phát sau khi người dùng tương tác.");
                     });
@@ -162,6 +269,16 @@
                 size: `${Math.random() * 3 + 1}px`,
                 duration: `${Math.random() * 2 + 1}s`
             }));
+            
+            // Tạo sao băng
+            const shootingStars = Array.from({ length: 5 }).map((_, i) => ({
+                id: i,
+                style: {
+                    '--top-offset': `${Math.random() * 80 - 10}vh`, // vị trí Y ngẫu nhiên
+                    '--delay': `${Math.random() * 10}s` // delay ngẫu nhiên
+                }
+            }));
+
 
             return (
                 <div className={`app-container ${scene === 3 ? 'bg-dark' : 'bg-light'}`}>
@@ -207,6 +324,7 @@
                     {scene === 2 && (
                         <div className="transition-scene">
                             <div className="glowing-heart"></div>
+                            <ParticleExplosion />
                         </div>
                     )}
 
@@ -217,6 +335,9 @@
                                     <div key={i} className="star" style={{ left: star.left, top: star.top, width: star.size, height: star.size, animationDuration: star.duration }} />
                                 ))}
                             </div>
+                             {shootingStars.map(star => (
+                                <div key={star.id} className="shooting-star" style={star.style}></div>
+                            ))}
 
                             <div className="firework-heart">💖</div>
 
